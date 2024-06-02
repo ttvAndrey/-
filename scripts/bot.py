@@ -1,9 +1,12 @@
 import telebot
 from telebot import types
 
-price_list  = {'estetik 50': 3500,
-                'estetik 50': 3500,
-                'estetik 50': 3500}
+price_list  = {'estetik 180': 3500,
+                'bionika 160': 4200,
+                'shick 110': 2600,
+                'versal 150': 5000,
+                'lounge 50': 450,
+                'retro 160': 3600}
 
 
 class Bot:
@@ -24,6 +27,7 @@ class Bot:
             button4 = types.InlineKeyboardButton("отзовы",callback_data='feedback')
             button5 = types.InlineKeyboardButton("гарантии",callback_data='warranty')
             button6 = types.InlineKeyboardButton("подержка",callback_data='support')
+            button6 = types.InlineKeyboardButton("коризна",callback_data='cart')
             markup.add(button1,button2,button3,button4,button5,button6)
             #main_markup = markup
             self.bot.send_photo(message.chat.id, photo=open("../images/start.jpg","rb"), caption="Привет, вы попали в магазин по продаже свечей!", reply_markup=markup)
@@ -52,7 +56,7 @@ class Bot:
             button1 = types.InlineKeyboardButton("Купить",callback_data='versal 150')
             markup.add(button1)
             self.bot.edit_message_media(media=types.InputMediaPhoto(open("../images/menu.jpg",'rb')),chat_id=message.chat.id,message_id=message.message_id)
-            self.bot.edit_message_caption("Купить Versal Объемом 150 мл, Цена - ? ₽",message.chat.id,message.message_id,reply_markup=markup)
+            self.bot.edit_message_caption("Купить Versal Объемом 150 мл, Цена - 5000 ₽",message.chat.id,message.message_id,reply_markup=markup)
         def lounge(message):#здесь
             markup = types.InlineKeyboardMarkup(row_width=2)
             button1 = types.InlineKeyboardButton("Купить",callback_data='lounge 50')
@@ -91,11 +95,17 @@ class Bot:
         @self.bot.message_handler(commands=["faq"])
         def faq(message):   
             self.bot.send_message(message.chat.id, "Ответы на часто задаваемые вопросы!")
+        def show_cart(message,reciept):
+            markup = types.InlineKeyboardMarkup(row_width=2)
+            button1 = types.InlineKeyboardButton("купить товары в корзине",callback_data='check cart')
+            markup.add(button1)
+            self.bot.edit_message_media(media=types.InputMediaPhoto(open("../images/menu.jpg",'rb')),chat_id=message.chat.id,message_id=message.message_id)
+            self.bot.edit_message_caption(reciept,message.chat.id,message.message_id,reply_markup=markup)
+        @self.bot.message_handler(commands=["cart"])
         def cart(message):
             markup = types.InlineKeyboardMarkup(row_width=2)
-            button1 = types.InlineKeyboardButton("посмотреть корзину",callback_data='check cart')
-            button2 = types.InlineKeyboardButton("купить",callback_data='buy cart')
-            markup.add(button1,button2)
+            button1 = types.InlineKeyboardButton("посмотреть корзину",callback_data='show cart')
+            markup.add(button1)
             self.bot.edit_message_caption("Личный кабинет",message.chat.id,message.message_id,reply_markup=markup)
         @self.bot.callback_query_handler(func=lambda callback: True)
         def callback_message(callback):
@@ -116,21 +126,45 @@ class Bot:
             elif callback.data=='support':
                 self.bot.send_message(callback.message.chat.id,"Вы попали в подержку")
                 support(callback.message)
-            elif callback.data == 'estetik 180':
-                self.cart.append((callback.message, callback.data,price_list[callback.data]))
-            elif callback.data == 'retro 160':
-                self.cart.append((callback.message, callback.data,price_list[callback.data]))
-            elif callback.data == 'bionika 160':
-                self.cart.append((callback.message, callback.data,price_list[callback.data]))
-            elif callback.data == 'versal 150':
-                self.cart.append((callback.message, callback.data,price_list[callback.data]))
-            elif callback.data == 'lounge 50':
-                self.cart.append((callback.message, callback.data,price_list[callback.data]))
-            elif callback.data == 'shikc 110':
-                self.cart.append((callback.message, callback.data,price_list[callback.data]))
+            elif callback.data=='cart':
+                self.bot.send_message(callback.message.chat.id,"Вы попали в корзину")
+                cart(callback.message)
+            elif callback.data=='show cart':
+                self.bot.send_message(callback.message.chat.id,"Вы попали в просмотр корзины")
+                show_cart(callback.message,self.check_cart())
+            elif callback.data=='estetik':
+                self.bot.send_message(callback.message.chat.id,"Вы попали в estetik")
+                estetik(callback.message)
+            elif callback.data=='estetik':
+                self.bot.send_message(callback.message.chat.id,"Вы попали в estetik")
+                estetik(callback.message)
+            elif callback.data=='bionika':
+                self.bot.send_message(callback.message.chat.id,"Вы попали в bionika")
+                bionika(callback.message)
+            elif callback.data=='shick':
+                self.bot.send_message(callback.message.chat.id,"Вы попали в shick")
+                shick(callback.message)
+            elif callback.data=='versal':
+                self.bot.send_message(callback.message.chat.id,"Вы попали в versal")
+                versal(callback.message)
+            elif callback.data=='lounge':
+                self.bot.send_message(callback.message.chat.id,"Вы попали в lounge")
+                lounge(callback.message)
+            elif callback.data=='retro':
+                self.bot.send_message(callback.message.chat.id,"Вы попали в retro")
+                retro(callback.message)
             elif callback.data == 'buy cart':
                 self.buy()
-    def buy(self):
+            else:
+                self.cart.append((callback.data,price_list[callback.data]))
+            
+    def check_cart(self):
         reciept = "Ваш чек:\n"
         for i in range(self.cart):
-            reciept+=f"{i+1}. "
+            reciept+=f"{i+1}. f{self.cart[i][0]} - {self.cart[i][1]}₽"
+        return reciept
+    def buy_cart(self):
+        with open('../orders.txt', 'a', encoding='utf-8') as f:
+            data = self.check_cart()
+            f.write(data)
+        self.cart.clear()
